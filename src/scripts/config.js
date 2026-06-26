@@ -18,7 +18,13 @@ const UI_CONFIG = {
   },
 };
 
+const CAMERA_CONFIG = {
+  aspectRatio: 4 / 3,
+  defaultFPS: 30,
+};
+
 export {
   APP_CONFIG,
   UI_CONFIG,
+  CAMERA_CONFIG,
 };

@@ -1,6 +1,7 @@
 const path = require("path");
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const webpack = require("webpack");
 
 module.exports = {
   entry: {
@@ -38,10 +39,28 @@ module.exports = {
     },
   },
   plugins: [
+    new webpack.DefinePlugin({
+      "process.env": JSON.stringify({ NODE_ENV: "production" }),
+    }),
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "src/index.html"),
       scriptLoading: "module",
-    })
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.resolve(__dirname, "src/public"),
+          to: path.resolve(__dirname, "dist"),
+          globOptions: {
+            ignore: ["**/screenshots/**"],
+          },
+        },
+        {
+          from: path.resolve(__dirname, "src/model"),
+          to: path.resolve(__dirname, "dist/model"),
+        },
+      ],
+    }),
   ],
   stats: {
     warningsFilter: /import\.meta/,

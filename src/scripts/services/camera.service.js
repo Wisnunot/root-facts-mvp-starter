@@ -4,29 +4,117 @@ class CameraService {
     this.video = null;
     this.canvas = null;
     this.config = null;
+    this.fps = 30;
+    this.frameInterval = 1000 / 30;
   }
 
-  // TODO [Basic] inisiasi elemen video dan canvas
   initializeElements(videoId, canvasId) {
     this.video = document.getElementById(videoId);
     this.canvas = document.getElementById(canvasId);
   }
 
-  // TODO [Basic] Tambahkan konfigurasi kamera untuk mendapatkan daftar perangkat input video
-  // TODO [Basic] Dapatkan constraints kamera berdasarkan konfigurasi dan kamera yang dipilih
-  async loadCameras(cameraSelect) {}
+  async loadCameras(cameraSelect) {
+    if (!cameraSelect) return;
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoDevices = devices.filter((device) => device.kind === "videoinput");
 
-  // TODO [Basic] Memulai kamera dengan perangkat yang dipilih dan menampilkan pada elemen video
-  async startCamera(videoId, canvasId, cameraSelect) {}
+      cameraSelect.innerHTML = "";
+      if (videoDevices.length === 0) {
+        const option = document.createElement("option");
+        option.value = "default";
+        option.text = "Kamera Belakang (Default)";
+        cameraSelect.appendChild(option);
 
-  // TODO [Basic] Menghentikan siaran kamera dan membersihkan sumber daya
-  stopCamera() {}
+        const optionFront = document.createElement("option");
+        optionFront.value = "front";
+        optionFront.text = "Kamera Depan";
+        cameraSelect.appendChild(optionFront);
+        return;
+      }
 
-  // TODO [Skilled] Implementasikan metode untuk mengatur FPS kamera
-  setFPS(fps) {}
+      videoDevices.forEach((device, index) => {
+        const option = document.createElement("option");
+        option.value = device.deviceId;
+        
+        let label = device.label || `Kamera ${index + 1}`;
+        if (label.toLowerCase().includes("back") || label.toLowerCase().includes("rear") || label.toLowerCase().includes("environment")) {
+          label = `Belakang - ${label}`;
+        } else if (label.toLowerCase().includes("front") || label.toLowerCase().includes("user")) {
+          label = `Depan - ${label}`;
+        }
+        
+        option.text = label;
+        cameraSelect.appendChild(option);
+      });
 
-  // TODO [Basic] Periksa apakah kamera sedang aktif
-  isActive() {}
+      if (videoDevices.length > 0 && !videoDevices[0].label) {
+        cameraSelect.innerHTML = "";
+        const optionDefault = document.createElement("option");
+        optionDefault.value = "default";
+        optionDefault.text = "Kamera Belakang";
+        cameraSelect.appendChild(optionDefault);
+
+        const optionFront = document.createElement("option");
+        optionFront.value = "front";
+        optionFront.text = "Kamera Depan";
+        cameraSelect.appendChild(optionFront);
+      }
+    } catch (error) {
+      console.error("Gagal memuat daftar kamera:", error);
+    }
+  }
+
+  async startCamera(videoId, canvasId, cameraSelectValue) {
+    this.initializeElements(videoId, canvasId);
+    this.stopCamera();
+
+    const constraints = {
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+      },
+    };
+
+    if (cameraSelectValue === "front") {
+      constraints.video.facingMode = "user";
+    } else if (cameraSelectValue === "default" || !cameraSelectValue) {
+      constraints.video.facingMode = { ideal: "environment" };
+    } else {
+      constraints.video.deviceId = { exact: cameraSelectValue };
+    }
+
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia(constraints);
+      if (this.video) {
+        this.video.srcObject = this.stream;
+        await this.video.play();
+      }
+      return this.stream;
+    } catch (error) {
+      console.error("Gagal memulai kamera:", error);
+      throw error;
+    }
+  }
+
+  stopCamera() {
+    if (this.stream) {
+      this.stream.getTracks().forEach((track) => track.stop());
+      this.stream = null;
+    }
+    if (this.video) {
+      this.video.srcObject = null;
+    }
+  }
+
+  setFPS(fps) {
+    this.fps = parseInt(fps, 10) || 30;
+    this.frameInterval = 1000 / this.fps;
+  }
+
+  isActive() {
+    return this.stream !== null && this.stream.active;
+  }
 }
 
 export default CameraService;
