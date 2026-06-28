@@ -4,6 +4,7 @@
 
 🔗 **Demo:** lihat `STUDENT.txt` untuk URL deployment.
 
+atau langsung akses saja 🔗 https://rootfacts-react-wisnot.netlify.app/
 ---
 
 ## 🎯 Tujuan Aplikasi
